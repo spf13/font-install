@@ -11,11 +11,13 @@ import (
 )
 
 func main() {
-	var fonts []string
+	var (
+		fonts    []string
+		filename = flag.String("fromFile", "", "text file containing fonts to install")
+		debug    = flag.Bool("debug", false, "Enable debug logging")
+		dryrun   = flag.Bool("dry-run", false, "Don't actually download or install anything")
+	)
 
-	var filename = flag.String("fromFile", "", "text file containing fonts to install")
-	var debug = flag.Bool("debug", false, "Enable debug logging")
-	var dryrun = flag.Bool("dry-run", false, "Don't actually download or install anything")
 	flag.Parse()
 
 	if *filename == "" && len(flag.Args()) == 0 {
@@ -34,27 +36,23 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		re := regexp.MustCompile(`^(#.*|\s*)?$`)
+
 		scanner := bufio.NewScanner(fd)
 		for scanner.Scan() {
 			line := scanner.Text()
-			skip, err := regexp.MatchString(`^(#.*|\s*)?$`, line)
-			if err != nil {
-				log.Errorf("error reading %s: $v", *filename, err)
-				continue
-			}
-
-			if !skip {
+			if !re.MatchString(line) {
 				fonts = append(fonts, line)
 			}
 		}
+
 		if err = scanner.Err(); err != nil {
 			log.Fatal(err)
 		}
 	}
 
-	for _, v := range flag.Args() {
-		fonts = append(fonts, v)
-	}
+	fonts = append(fonts, flag.Args()...)
 
 	for _, v := range fonts {
 		if *dryrun {
@@ -63,6 +61,7 @@ func main() {
 		}
 
 		log.Debugf("Installing font from %v", v)
+
 		if err := InstallFont(v); err != nil {
 			log.Error(err)
 		}

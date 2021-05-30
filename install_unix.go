@@ -1,4 +1,4 @@
-// +build linux solaris
+// +build linux solaris openbsd
 
 package main
 
@@ -22,9 +22,8 @@ func platformDependentInstall(fontData *FontData) (err error) {
 	log.Debugf("Installing \"%v\" to %v", fontData.Name, fullPath)
 
 	if err = os.MkdirAll(path.Dir(fullPath), 0700); err != nil {
-		return
+		return err
 	}
 
-	err = ioutil.WriteFile(fullPath, fontData.Data, 0644)
-	return
+	return ioutil.WriteFile(fullPath, fontData.Data, 0644)
 }

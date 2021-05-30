@@ -17,9 +17,9 @@ func platformDependentInstall(fontData *FontData) (err error) {
 	fullPath := path.Join(FontsDir, fontData.FileName)
 	log.Debugf("Installing \"%v\" to %v", fontData.Name, fullPath)
 
-	err = ioutil.WriteFile(fullPath, fontData.Data, 0644)
+	err = ioutil.WriteFile(fullPath, fontData.Data, 0644) //nolint:gosec
 	if err != nil {
-		return
+		return err
 	}
 
 	// Second, write metadata about the font to the registry.
@@ -27,9 +27,11 @@ func platformDependentInstall(fontData *FontData) (err error) {
 	if err != nil {
 		// If this fails, remove the font file as well.
 		log.Error(err)
+
 		if nexterr := os.Remove(fullPath); nexterr != nil {
 			return nexterr
 		}
+
 		return err
 	}
 	defer k.Close()
@@ -42,10 +44,12 @@ func platformDependentInstall(fontData *FontData) (err error) {
 	if err = k.SetStringValue(fontData.Name, valueName); err != nil {
 		// If this fails, remove the font file as well.
 		log.Error(err)
+
 		if nexterr := os.Remove(fullPath); nexterr != nil {
 			return nexterr
 		}
-		return
+
+		return err
 	}
 
 	return nil
